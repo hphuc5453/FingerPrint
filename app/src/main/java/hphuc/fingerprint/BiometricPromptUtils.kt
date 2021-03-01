@@ -7,14 +7,13 @@ import androidx.core.content.ContextCompat
 object BiometricPromptUtils {
     fun createBiometricPrompt(
         activity: AppCompatActivity,
-        processSuccess: (BiometricPrompt.AuthenticationResult) -> Unit
+        onProcess: () -> Unit
     ): BiometricPrompt {
         val executor = ContextCompat.getMainExecutor(activity)
-
         val callback = object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                 super.onAuthenticationSucceeded(result)
-                processSuccess(result)
+                onProcess()
             }
         }
         return BiometricPrompt(activity, executor, callback)
