@@ -9,6 +9,7 @@ import hphuc.fingerprint.AppConstants.Companion.ENCRYPTION_ALGORITHM
 import hphuc.fingerprint.AppConstants.Companion.ENCRYPTION_BLOCK_MODE
 import hphuc.fingerprint.AppConstants.Companion.ENCRYPTION_PADDING
 import hphuc.fingerprint.AppConstants.Companion.KEY_SIZE
+import hphuc.fingerprint.database.ConfigUtil
 import java.nio.charset.Charset
 import java.security.KeyStore
 import javax.crypto.Cipher
@@ -93,7 +94,6 @@ class CryptographyManagerImpl : CryptographyManager {
         mode: Int,
         prefKey: String
     ): CipherTextWrapper? {
-        val json = context.getSharedPreferences(filename, mode).getString(prefKey, null)
-        return Gson().fromJson(json, CipherTextWrapper::class.java)
+        return Gson().fromJson(ConfigUtil.fakeToken, CipherTextWrapper::class.java)
     }
 }

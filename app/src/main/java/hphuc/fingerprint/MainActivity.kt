@@ -3,57 +3,78 @@ package hphuc.fingerprint
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import hphuc.fingerprint.AppConstants.Companion.CIPHER_TEXT_WRAPPER
 import hphuc.fingerprint.AppConstants.Companion.SHARED_PREFS_FILENAME
+import hphuc.fingerprint.AppConstants.Companion.secretKeyName
+import hphuc.fingerprint.database.ConfigUtil
 
 class MainActivity : AppCompatActivity() {
 
     lateinit var ivFinger: AppCompatImageView
     private var cipherTextWrapper: CipherTextWrapper? = null
     private lateinit var biometricPrompt: BiometricPrompt
-    private val cryptographyManager = CryptographyManagerImpl()
+    private var cryptographyManager = CryptographyManagerImpl()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        cipherTextWrapper = cryptographyManager.getCipherTextWrapperFromSharedPrefs(
-            applicationContext,
-            SHARED_PREFS_FILENAME,
-            Context.MODE_PRIVATE,
-            CIPHER_TEXT_WRAPPER
-        )
+        fakeTokenAndInitBiometric()
+
+//        cipherTextWrapper = cryptographyManager.getCipherTextWrapperFromSharedPrefs(
+//            applicationContext,
+//            SHARED_PREFS_FILENAME,
+//            Context.MODE_PRIVATE,
+//            CIPHER_TEXT_WRAPPER
+//        )
 
         ivFinger = findViewById(R.id.fingerPrint)
         ivFinger.setOnClickListener {
             if (checkAuthenticate()) {
-                if(cipherTextWrapper != null){
+//                if (cipherTextWrapper != null) {
                     showBiometricPromptForDecryption()
-                }
+//                }
             }
         }
     }
 
+    private fun fakeTokenAndInitBiometric() {
+        ConfigUtil.saveFakeToken(null)
+        val fakeToken = java.util.UUID.randomUUID().toString()
+        ConfigUtil.saveFakeToken(fakeToken)
+    }
+
     private fun showBiometricPromptForDecryption() {
-        cipherTextWrapper.let { textWrapper ->
-            val secretKeyName = ""
-            val cipher = cryptographyManager.getInitializedCipherForDecryption(
-                secretKeyName, textWrapper!!.initializationVector
-            )
-            biometricPrompt = BiometricPromptUtils.createBiometricPrompt(
-                this,
-                ::decryptServerTokenFromStorage
-            )
-            val promptInfo = BiometricPromptUtils.createPromptInfo(this)
-            biometricPrompt.authenticate(
-                promptInfo,
-                BiometricPrompt.CryptoObject(cipher)
-            )
-        }
+        cryptographyManager = CryptographyManagerImpl()
+        val cipher = cryptographyManager.getInitializedCipherForEncryption(secretKeyName)
+        val biometricPrompt =
+            BiometricPromptUtils.createBiometricPrompt(this, ::encryptAndStoreServerToken)
+        val promptInfo = BiometricPromptUtils.createPromptInfo(
+            "title",
+            "sub title",
+            "description",
+            "close text"
+        )
+        biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
+    }
+
+    private fun encryptAndStoreServerToken(authResult: BiometricPrompt.AuthenticationResult) {
+//        authResult.cryptoObject?.cipher?.apply {
+//                val encryptedServerTokenWrapper = cryptographyManager.encryptData(ConfigUtil.fakeToken!!, this)
+//                cryptographyManager.persistCipherTextWrapperToSharedPrefs(
+//                    encryptedServerTokenWrapper,
+//                    applicationContext,
+//                    SHARED_PREFS_FILENAME,
+//                    Context.MODE_PRIVATE,
+//                    CIPHERTEXT_WRAPPER
+//                )
+//        }
+//        finish()
     }
 
     private fun decryptServerTokenFromStorage(authResult: BiometricPrompt.AuthenticationResult) {
